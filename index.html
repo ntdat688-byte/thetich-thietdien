@@ -2,8 +2,8 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Mô phỏng Thể tích - Tâm Đức</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Mô phỏng Thể tích - Hệ thống Giáo dục Tâm Đức</title>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -33,10 +33,10 @@
 
         /* Glassmorphism utility */
         .glass {
-            background: rgba(255, 255, 255, 0.9);
+            background: rgba(255, 255, 255, 0.85);
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.6);
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
         }
         
@@ -75,9 +75,15 @@
         .fab-btn:active {
             transform: scale(0.95);
         }
+
+        /* Fix height for mobile browsers */
+        .h-dvh {
+            height: 100vh; /* Fallback */
+            height: 100dvh;
+        }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-800 font-sans h-screen flex flex-col md:flex-row overflow-hidden">
+<body class="bg-slate-50 text-slate-800 font-sans h-dvh flex flex-col md:flex-row overflow-hidden">
 
     <!-- Sidebar -->
     <aside id="sidebar" class="fixed inset-y-0 left-0 md:relative w-80 h-full glass z-50 transform -translate-x-full md:translate-x-0 transition-all duration-300 flex flex-col border-r border-slate-200 shadow-2xl md:shadow-none md:ml-0">
@@ -175,10 +181,10 @@
     </aside>
 
     <!-- Main Canvas Area -->
-    <main class="flex-1 relative bg-white w-full h-full">
+    <main class="flex-1 relative bg-white w-full h-full overflow-hidden">
         
         <!-- App Title Overlay (Centered Top) -->
-        <div class="absolute top-2 md:top-4 left-0 right-0 flex justify-center z-10 pointer-events-none px-12 md:px-0">
+        <div class="absolute top-2 md:top-4 left-0 right-0 flex justify-center z-10 pointer-events-none px-4 md:px-0">
             <div class="glass px-4 py-2 md:px-6 md:py-3 rounded-full shadow-lg border border-indigo-100 bg-white/95">
                 <h1 class="text-[10px] md:text-sm font-bold text-indigo-800 uppercase tracking-widest text-center leading-tight">
                     APP HỌC TẬP HỆ THỐNG GIÁO DỤC TÂM ĐỨC
@@ -209,8 +215,8 @@
             </div>
         </div>
 
-        <!-- Instructions (Bottom Left) -->
-        <div class="absolute bottom-24 md:bottom-4 left-4 z-10 pointer-events-none">
+        <!-- Instructions (Left Side on Mobile, raised to clear browser bottom bar) -->
+        <div class="absolute bottom-28 md:bottom-4 left-4 z-10 pointer-events-none">
              <div class="glass px-3 py-2 rounded-lg border border-slate-200 shadow-sm text-slate-600 text-[10px] md:text-xs font-medium flex gap-3 items-center bg-white/80">
                 <span class="flex items-center"><i class="fa-solid fa-rotate mr-1.5 text-indigo-500"></i>Xoay</span>
                 <span class="w-px h-3 bg-slate-300"></span>
@@ -220,15 +226,15 @@
             </div>
         </div>
 
-        <!-- Author Credit (Bottom Right) -->
-        <div class="absolute bottom-24 md:bottom-4 right-4 z-10 pointer-events-none">
+        <!-- Author Credit (Right Side on Mobile, raised to clear browser bottom bar) -->
+        <div class="absolute bottom-28 md:bottom-4 right-4 z-10 pointer-events-none">
              <div class="glass px-3 py-2 rounded-lg border border-red-100 shadow-sm bg-white/90">
                 <p class="text-[10px] md:text-xs text-red-600 font-bold uppercase tracking-wide">Thiết kế bởi: GV Nguyễn Thành Đạt</p>
             </div>
         </div>
 
         <!-- Floating Action Buttons (Bottom Center) -->
-        <div class="absolute bottom-6 left-0 right-0 flex justify-center items-center gap-4 z-20 pointer-events-none">
+        <div class="absolute bottom-8 left-0 right-0 flex justify-center items-center gap-4 z-20 pointer-events-none pb-safe">
             <!-- Container for buttons to receive pointer events -->
             <div class="flex items-center gap-3 p-2 rounded-2xl glass shadow-xl pointer-events-auto border border-white/50 backdrop-blur-xl">
                 
