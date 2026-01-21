@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mô phỏng Thể tích & Thiết diện</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Math.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.8.0/math.min.js"></script>
+
+    <!-- Import Map for Three.js -->
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://cdn.jsdelivr.net/npm/three@0.158.0/build/three.module.js",
+                "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.158.0/examples/jsm/"
+            }
+        }
+    </script>
+
+    <style>
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+        /* Glassmorphism utility */
+        .glass {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(226, 232, 240, 0.8);
+        }
+        
+        /* Range Slider Styling */
+        input[type=range] {
+            -webkit-appearance: none; 
+            background: transparent; 
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 16px;
+            width: 16px;
+            border-radius: 50%;
+            background: #4f46e5;
+            margin-top: -6px;
+            cursor: pointer;
+            box-shadow: 0 0 2px rgba(0,0,0,0.2);
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 4px;
+            background: #cbd5e1;
+            border-radius: 2px;
+        }
+        
+        body { overflow: hidden; }
+    </style>
+</head>
+<body class="bg-white text-slate-800 font-sans h-screen flex flex-col md:flex-row">
+
+    <!-- Mobile Header -->
+    <div class="md:hidden bg-indigo-600 text-white p-4 flex justify-between items-center z-50 shadow-md">
+        <h1 class="font-bold text-lg"><i class="fa-solid fa-cube mr-2"></i>Mô phỏng Thể tích</h1>
+        <button id="menuBtn" class="focus:outline-none"><i class="fa-solid fa-bars text-xl"></i></button>
+    </div>
+
+    <!-- Sidebar -->
+    <aside id="sidebar" class="fixed md:relative w-80 h-full glass shadow-xl z-40 transform -translate-x-full md:translate-x-0 transition-transform duration-300 flex flex-col border-r border-slate-200">
+        
+        <div class="p-6 bg-indigo-600 text-white shrink-0 hidden md:block">
+            <h1 class="text-xl font-bold flex items-center"><i class="fa-solid fa-shapes mr-3"></i>Mô phỏng 3D</h1>
+            <p class="text-indigo-200 text-xs mt-1">Phương pháp Cắt Lát (Slicing)</p>
+        </div>
+
+        <div class="flex-1 overflow-y-auto p-6 space-y-6">
+            
+            <!-- Function Input -->
+            <div class="space-y-2">
+                <label class="block text-sm font-semibold text-slate-600 uppercase tracking-wider">Hàm biên / Đáy f(x)</label>
+                <div class="relative">
+                    <span class="absolute left-3 top-3 text-slate-400 font-serif italic">y =</span>
+                    <input type="text" id="functionInput" value="sqrt(4^2 - x^2)" 
+                        class="w-full pl-10 pr-4 py-2 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition-all font-mono text-indigo-700">
+                </div>
+                <p class="text-xs text-slate-400 mt-1 italic" id="functionHint">Đáy là hình tròn bán kính 4</p>
+                <p id="errorMsg" class="text-red-500 text-xs hidden"><i class="fa-solid fa-circle-exclamation mr-1"></i>Lỗi cú pháp</p>
+            </div>
+
+            <!-- Slicing Options -->
+            <div id="slicingOptions" class="space-y-4">
+                <div class="space-y-2">
+                    <label class="block text-sm font-semibold text-slate-600 uppercase tracking-wider">Hình dạng Thiết diện</label>
+                    <select id="shapeSelect" class="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm font-medium text-slate-700 outline-none">
+                        <option value="equilateral">Tam giác đều</option>
+                        <option value="square">Hình vuông</option>
+                        <option value="semicircle">Nửa hình tròn</option>
+                        <option value="isosceles">Tam giác vuông cân</option>
+                    </select>
+                </div>
+                
+                <!-- Slice Position Slider -->
+                <div class="space-y-2 bg-indigo-50 p-3 rounded-lg border border-indigo-100">
+                    <label class="block text-xs font-bold text-indigo-800 uppercase flex justify-between">
+                        Vị trí cắt (x)
+                        <span id="sliceXVal" class="font-mono text-indigo-600">0.00</span>
+                    </label>
+                    <input type="range" id="sliceXSlider" class="w-full accent-indigo-600">
+                </div>
+            </div>
+
+            <!-- Range Inputs -->
+            <div class="space-y-2">
+                <label class="block text-sm font-semibold text-slate-600 uppercase tracking-wider">Cận tích phân [a, b]</label>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="text-xs text-slate-500 block mb-1">Cận a (Start)</label>
+                        <input type="number" id="startX" value="-4" step="0.1" class="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 font-mono text-sm">
+                    </div>
+                    <div>
+                        <label class="text-xs text-slate-500 block mb-1">Cận b (End)</label>
+                        <input type="number" id="endX" value="4" step="0.1" class="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 font-mono text-sm">
+                    </div>
+                </div>
+                <p class="text-xs text-slate-400 italic text-right mt-1">Tự động cập nhật khi nhập</p>
+            </div>
+
+            <hr class="border-slate-200">
+
+            <!-- Play Controls -->
+            <div class="flex gap-2">
+                <button id="playBtn" class="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white py-2 rounded-lg transition-colors font-medium text-sm flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-play"></i> <span id="playBtnText">Chạy mô phỏng</span>
+                </button>
+                <button id="resetViewBtn" class="bg-slate-200 hover:bg-slate-300 text-slate-700 px-3 rounded-lg" title="Đặt lại Camera"><i class="fa-solid fa-camera"></i></button>
+            </div>
+
+            <!-- Appearance -->
+            <div class="space-y-3">
+                <label class="block text-sm font-semibold text-slate-600 uppercase tracking-wider">Hiển thị</label>
+                <div class="flex items-center justify-between p-3 bg-white rounded-lg border border-slate-200">
+                    <span class="text-sm text-slate-700">Lưới nổi (Edges)</span>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="wireframeCheck" class="sr-only peer">
+                        <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                    </label>
+                </div>
+                <div class="space-y-1">
+                    <div class="flex justify-between text-xs text-slate-500"><span>Độ đậm khối (Opacity)</span><span id="opacityVal">70%</span></div>
+                    <input type="range" id="opacitySlider" min="0.1" max="1" step="0.05" value="0.7" class="w-full">
+                </div>
+            </div>
+        </div>
+        <div class="p-4 border-t border-slate-200 text-center text-xs text-slate-400">Powered by Three.js & Math.js</div>
+    </aside>
+
+    <!-- Main Canvas -->
+    <main class="flex-1 relative bg-white overflow-hidden">
+        <div id="canvas-container" class="w-full h-full cursor-move"></div>
+        <div class="absolute top-4 right-4 flex flex-col gap-2 items-end pointer-events-none">
+            <div class="glass px-4 py-2 rounded-lg text-slate-800 shadow-lg flex items-center gap-2 pointer-events-auto border border-slate-200">
+                <div class="w-3 h-3 bg-rose-500 rounded-full"></div> <span class="text-xs font-bold">Mặt cắt (Slice)</span>
+            </div>
+            <div class="glass px-4 py-2 rounded-lg text-slate-800 shadow-lg flex items-center gap-2 pointer-events-auto border border-slate-200">
+                <div class="w-3 h-3 bg-red-500 rounded-full"></div> <span class="text-xs font-bold">Trục Ox</span>
+            </div>
+            <div class="glass px-4 py-2 rounded-lg text-slate-800 shadow-lg flex items-center gap-2 pointer-events-auto border border-slate-200">
+                <div class="w-3 h-3 bg-green-500 rounded-full"></div> <span class="text-xs font-bold">Trục Oy</span>
+            </div>
+             <div class="glass px-4 py-2 rounded-lg text-slate-800 shadow-lg flex items-center gap-2 pointer-events-auto border border-slate-200">
+                <div class="w-3 h-3 bg-blue-500 rounded-full"></div> <span class="text-xs font-bold">Trục Oz</span>
+            </div>
+        </div>
+    </main>
+
+    <!-- Overlay -->
+    <div id="sidebarOverlay" class="fixed inset-0 bg-black/50 z-30 hidden md:hidden glass"></div>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        let scene, camera, renderer, controls;
+        let meshGroup, axesGroup, lineGroup;
+        let isPlaying = false;
+        let debounceTimer;
+        
+        const config = {
+            expr: 'sqrt(4^2 - x^2)',
+            a: -4, b: 4,
+            currentX: -4, 
+            sliceShape: 'equilateral',
+            segments: 100,
+            opacity: 0.7, // Tăng độ đậm mặc định lên 70%
+            wireframe: false, // Mặc định tắt lưới
+            color: 0x2563eb // Xanh dương đậm (Blue-600)
+        };
+
+        const container = document.getElementById('canvas-container');
+        const shapeSelect = document.getElementById('shapeSelect');
+        const inputFunc = document.getElementById('functionInput');
+        const inputA = document.getElementById('startX');
+        const inputB = document.getElementById('endX');
+        const sliceXSlider = document.getElementById('sliceXSlider');
+        const sliceXVal = document.getElementById('sliceXVal');
+        const playBtn = document.getElementById('playBtn');
+        const playBtnText = document.getElementById('playBtnText');
+        const wireframeCheck = document.getElementById('wireframeCheck');
+        const opacitySlider = document.getElementById('opacitySlider');
+        const opacityVal = document.getElementById('opacityVal');
+        
+        function init() {
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0xffffff); 
+            scene.fog = new THREE.Fog(0xffffff, 20, 80);
+
+            camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 1000);
+            
+            // Cài đặt Camera: Nhìn từ xa trên trục Y âm, hướng về gốc O.
+            // Điều này làm cho trục X (Đỏ) chạy ngang từ trái qua phải.
+            // Z (Xanh lá/Xanh dương) hướng lên trên.
+            camera.position.set(0, -18, 8); 
+            camera.up.set(0, 0, 1); // Z là trục đứng
+
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap; 
+            container.appendChild(renderer.domElement);
+
+            controls = new OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+
+            // Lighting
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+            scene.add(ambientLight);
+
+            const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            dirLight.position.set(5, 10, 8);
+            dirLight.castShadow = true;
+            dirLight.shadow.mapSize.width = 1024;
+            dirLight.shadow.mapSize.height = 1024;
+            dirLight.shadow.camera.near = 0.5;
+            dirLight.shadow.camera.far = 50;
+            dirLight.shadow.radius = 4;
+            scene.add(dirLight);
+
+            axesGroup = new THREE.Group(); scene.add(axesGroup);
+            meshGroup = new THREE.Group(); scene.add(meshGroup);
+            lineGroup = new THREE.Group(); scene.add(lineGroup);
+
+            // Init values
+            config.currentX = config.a;
+            sliceXSlider.value = config.a;
+            sliceXVal.innerText = config.a.toFixed(2);
+
+            updateSimulation();
+            window.addEventListener('resize', onWindowResize);
+            animate();
+        }
+
+        function onWindowResize() {
+            camera.aspect = container.clientWidth / container.clientHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(container.clientWidth, container.clientHeight);
+        }
+
+        // --- MATH HELPERS ---
+        function getCurvePoints() {
+            try {
+                const node = math.parse(config.expr);
+                const code = node.compile();
+                const points = [];
+                const step = (config.b - config.a) / config.segments;
+                let maxVal = 0;
+
+                for (let i = 0; i <= config.segments; i++) {
+                    const x = config.a + i * step;
+                    let y = 0;
+                    try { y = code.evaluate({ x: x }); } catch (e) {}
+                    if (typeof y === 'object' && y.im) y = 0;
+                    if (isNaN(y) || !isFinite(y)) y = 0;
+                    points.push({ x: x, y: Math.abs(y) });
+                    if (Math.abs(y) > maxVal) maxVal = Math.abs(y);
+                }
+                
+                const rangeDiff = Math.abs(config.b - config.a);
+                if (rangeDiff > 0.1) {
+                    sliceXSlider.min = config.a;
+                    sliceXSlider.max = config.b;
+                    sliceXSlider.step = step;
+                }
+                
+                return { points, maxVal, maxDim: Math.max(Math.abs(config.a), Math.abs(config.b), maxVal) };
+            } catch (err) {
+                return null;
+            }
+        }
+
+        function getShapeVertices(x, halfWidth) {
+            const w = halfWidth;
+            const profile = [];
+            
+            if (config.sliceShape === 'equilateral') {
+                const h = w * Math.sqrt(3);
+                profile.push(new THREE.Vector3(x, -w, 0));
+                profile.push(new THREE.Vector3(x, w, 0));
+                profile.push(new THREE.Vector3(x, 0, h));
+            } else if (config.sliceShape === 'square') {
+                const s = 2 * w;
+                profile.push(new THREE.Vector3(x, -w, 0));
+                profile.push(new THREE.Vector3(x, w, 0));
+                profile.push(new THREE.Vector3(x, w, s));
+                profile.push(new THREE.Vector3(x, -w, s));
+            } else if (config.sliceShape === 'semicircle') {
+                const segs = 24;
+                for(let i=0; i<=segs; i++) {
+                    const ang = (i/segs) * Math.PI;
+                    const y = -w * Math.cos(ang);
+                    const z = w * Math.sin(ang);
+                    profile.push(new THREE.Vector3(x, y, z));
+                }
+            } else if (config.sliceShape === 'isosceles') {
+                profile.push(new THREE.Vector3(x, -w, 0));
+                profile.push(new THREE.Vector3(x, w, 0));
+                profile.push(new THREE.Vector3(x, -w, 2*w));
+            }
+            return profile;
+        }
+
+        function createSlicedGeometry(allPoints, limitX) {
+            const vertices = [];
+            const indices = [];
+            const activePoints = [];
+            
+            let i = 0;
+            while(i < allPoints.length && allPoints[i].x < limitX) {
+                activePoints.push(allPoints[i]);
+                i++;
+            }
+
+            if (activePoints.length > 0) {
+                let y = 0;
+                if (i < allPoints.length) {
+                    const p1 = allPoints[i-1] || allPoints[0];
+                    const p2 = allPoints[i];
+                    if (p2.x !== p1.x) {
+                        const t = (limitX - p1.x) / (p2.x - p1.x);
+                        y = p1.y + (p2.y - p1.y) * t;
+                    } else { y = p2.y; }
+                } else if (activePoints.length > 0) {
+                    y = activePoints[activePoints.length-1].y;
+                }
+                activePoints.push({ x: limitX, y: y });
+            } else if (i < allPoints.length) {
+                 const pStart = allPoints[0];
+                 activePoints.push(pStart);
+                 if(limitX > pStart.x) {
+                     const p2 = allPoints[1];
+                     if(p2) {
+                        const t = (limitX - pStart.x) / (p2.x - pStart.x);
+                        const y = pStart.y + (p2.y - pStart.y) * t;
+                        activePoints.push({ x: limitX, y: y });
+                     }
+                 }
+            }
+            
+            const grid = [];
+            activePoints.forEach(p => {
+                const profile = getShapeVertices(p.x, p.y);
+                const rowIndices = [];
+                profile.forEach(v => {
+                    vertices.push(v.x, v.y, v.z);
+                    rowIndices.push((vertices.length/3) - 1);
+                });
+                grid.push(rowIndices);
+            });
+
+            for (let r = 0; r < grid.length - 1; r++) {
+                const row1 = grid[r];
+                const row2 = grid[r+1];
+                for (let c = 0; c < row1.length - 1; c++) {
+                    const a = row1[c], b = row2[c], c_v = row2[c+1], d = row1[c+1];
+                    indices.push(a, b, d); indices.push(d, b, c_v);
+                }
+                indices.push(row1[0], row1[row1.length-1], row2[0]);
+                indices.push(row2[0], row1[row1.length-1], row2[row2.length-1]);
+            }
+            
+            if(grid.length > 0) {
+                const row = grid[0];
+                for (let k = 1; k < row.length - 1; k++) {
+                     indices.push(row[0], row[k], row[k+1]);
+                }
+            }
+
+            const geometry = new THREE.BufferGeometry();
+            geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+            geometry.setIndex(indices);
+            geometry.computeVertexNormals();
+            return geometry;
+        }
+
+        function createCurrentSliceMesh(x, y) {
+            const profile = getShapeVertices(x, y);
+            if (profile.length < 3) return null;
+            const vertices = [];
+            const indices = [];
+            profile.forEach(v => vertices.push(v.x, v.y, v.z));
+            for (let i = 1; i < profile.length - 1; i++) indices.push(0, i, i + 1);
+            const geometry = new THREE.BufferGeometry();
+            geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+            geometry.setIndex(indices);
+            geometry.computeVertexNormals();
+            return geometry;
+        }
+
+        // --- DRAWING ---
+        function updateSimulation() {
+            while(meshGroup.children.length > 0) {
+                const o = meshGroup.children[0];
+                if(o.geometry) o.geometry.dispose();
+                if(o.material) {
+                    if(Array.isArray(o.material)) o.material.forEach(m=>m.dispose());
+                    else o.material.dispose();
+                }
+                meshGroup.remove(o);
+            }
+            while(lineGroup.children.length > 0) lineGroup.remove(lineGroup.children[0]);
+            while(axesGroup.children.length > 0) axesGroup.remove(axesGroup.children[0]);
+
+            const data = getCurvePoints();
+            if (!data) return;
+            const { points, maxDim } = data;
+
+            drawAxes(maxDim * 1.5);
+
+            // Draw Base Line
+            const lineGeom = new THREE.BufferGeometry().setFromPoints(points.map(p => new THREE.Vector3(p.x, p.y, 0)));
+            const lineMat = new THREE.LineBasicMaterial({ color: 0xd97706, linewidth: 2 });
+            lineGroup.add(new THREE.Line(lineGeom, lineMat));
+            
+            const lineGeom2 = new THREE.BufferGeometry().setFromPoints(points.map(p => new THREE.Vector3(p.x, -p.y, 0)));
+            lineGroup.add(new THREE.Line(lineGeom2, lineMat));
+
+            const solidGeo = createSlicedGeometry(points, config.currentX);
+
+            // 1. Solid Body
+            const solidMat = new THREE.MeshPhysicalMaterial({
+                color: config.color, // Blue
+                metalness: 0.1, 
+                roughness: 0.2,
+                transparent: true, 
+                opacity: config.opacity,
+                side: THREE.DoubleSide,
+                depthWrite: false,
+                polygonOffset: true,
+                polygonOffsetFactor: 1, 
+                polygonOffsetUnits: 1
+            });
+            const solid = new THREE.Mesh(solidGeo, solidMat);
+            solid.castShadow = true;
+            solid.receiveShadow = true;
+            meshGroup.add(solid);
+
+            // 2. Wireframe Overlay
+            if (config.wireframe) {
+                const wireMat = new THREE.MeshBasicMaterial({
+                    color: 0x1e40af, // Darker Blue
+                    wireframe: true,
+                    transparent: true,
+                    opacity: 0.5
+                });
+                const wireMesh = new THREE.Mesh(solidGeo, wireMat);
+                meshGroup.add(wireMesh);
+            }
+
+            // 3. Highlight Slice
+            let currentY = 0;
+            let idx = 0;
+            while(idx < points.length && points[idx].x < config.currentX) idx++;
+            if (idx < points.length && idx > 0) {
+                const p1 = points[idx-1]; const p2 = points[idx];
+                const t = (config.currentX - p1.x) / (p2.x - p1.x);
+                currentY = p1.y + (p2.y - p1.y) * t;
+            } else if (idx === 0) { currentY = points[0].y; } 
+            else { currentY = points[points.length-1].y; }
+            
+            const sliceGeo = createCurrentSliceMesh(config.currentX, currentY);
+            if(sliceGeo) {
+                // Ruby/Rose Glass Effect
+                const sliceMat = new THREE.MeshPhysicalMaterial({ 
+                    color: 0xf43f5e, 
+                    side: THREE.DoubleSide, 
+                    transparent: true, 
+                    opacity: 0.6,
+                    metalness: 0.1,
+                    roughness: 0.1,
+                    clearcoat: 0.5,
+                    emissive: 0xf43f5e,
+                    emissiveIntensity: 0.2
+                });
+                const slice = new THREE.Mesh(sliceGeo, sliceMat);
+                slice.position.x += 0.002; 
+                meshGroup.add(slice);
+                
+                const edges = new THREE.EdgesGeometry(sliceGeo);
+                const outline = new THREE.LineSegments(edges, new THREE.LineBasicMaterial( { color: 0xbe123c, linewidth: 2 } ) );
+                outline.position.x += 0.003;
+                meshGroup.add(outline);
+            }
+        }
+
+        function makeTextSprite(message, parameters) {
+            if ( parameters === undefined ) parameters = {};
+            var fontsize = parameters.hasOwnProperty("fontsize") ? parameters["fontsize"] : 50;
+            var canvas = document.createElement('canvas');
+            canvas.width = 128; canvas.height = 64;
+            var context = canvas.getContext('2d');
+            
+            context.clearRect(0, 0, canvas.width, canvas.height);
+
+            context.font = "Bold " + fontsize + "px Arial";
+            context.fillStyle = "rgba(0,0,0,1.0)";
+            context.textAlign = 'center';
+            context.textBaseline = 'middle';
+            context.fillText( message, canvas.width/2, canvas.height/2);
+            
+            var texture = new THREE.Texture(canvas); 
+            texture.needsUpdate = true;
+            
+            var spriteMaterial = new THREE.SpriteMaterial( { map: texture, transparent: true } );
+            var sprite = new THREE.Sprite( spriteMaterial );
+            sprite.scale.set(1.5, 0.75, 1.0); 
+            return sprite;
+        }
+
+        function drawAxes(size) {
+            function axis(color, dir, label) {
+                const g = new THREE.Group();
+                const mat = new THREE.MeshBasicMaterial({color});
+                
+                // Positive Axis
+                const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, size, 8), mat);
+                shaft.position.y = size/2;
+                const head = new THREE.Mesh(new THREE.ConeGeometry(0.15, 0.3, 12), mat);
+                head.position.y = size;
+                g.add(shaft, head);
+
+                // Negative Axis
+                const negGeo = new THREE.BufferGeometry().setFromPoints([
+                    new THREE.Vector3(0, 0, 0),
+                    new THREE.Vector3(0, -size, 0)
+                ]);
+                const negMat = new THREE.LineDashedMaterial({
+                    color: color,
+                    dashSize: 0.2,
+                    gapSize: 0.2,
+                    opacity: 0.5,
+                    transparent: true
+                });
+                const negLine = new THREE.Line(negGeo, negMat);
+                negLine.computeLineDistances(); 
+                g.add(negLine);
+                
+                if(dir==='x') g.rotation.z = -Math.PI/2;
+                if(dir==='z') g.rotation.x = Math.PI/2;
+                axesGroup.add(g);
+
+                const sprite = makeTextSprite(label, { fontsize: 40 });
+                const labelPos = size + 0.6;
+                if(dir==='x') sprite.position.set(labelPos, 0, 0);
+                if(dir==='y') sprite.position.set(0, labelPos, 0);
+                if(dir==='z') sprite.position.set(0, 0, labelPos);
+                axesGroup.add(sprite);
+            }
+            axis(0xef4444, 'x', 'x'); 
+            axis(0x22c55e, 'y', 'y'); 
+            axis(0x3b82f6, 'z', 'z');
+
+            const originSprite = makeTextSprite('O', { fontsize: 40 });
+            originSprite.position.set(-0.5, -0.5, 0);
+            axesGroup.add(originSprite);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+
+            if (isPlaying) {
+                let nextX = parseFloat(config.currentX) + 0.05;
+                
+                if (nextX >= config.b) {
+                    nextX = config.b;
+                    isPlaying = false;
+                    playBtn.innerHTML = '<i class="fa-solid fa-play"></i> <span id="playBtnText">Chạy mô phỏng</span>';
+                }
+
+                config.currentX = nextX;
+                sliceXSlider.value = nextX;
+                sliceXVal.innerText = nextX.toFixed(2);
+                updateSimulation(); 
+            }
+            renderer.render(scene, camera);
+        }
+
+        // --- EVENTS & AUTO UPDATE ---
+        
+        function debounce(func, timeout = 500){
+            return (...args) => {
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(() => { func.apply(this, args); }, timeout);
+            };
+        }
+
+        const autoUpdate = debounce(() => {
+            updateUI();
+        }, 500);
+
+        function updateUI() {
+            config.expr = inputFunc.value;
+            config.a = parseFloat(inputA.value);
+            config.b = parseFloat(inputB.value);
+            config.sliceShape = shapeSelect.value;
+            config.wireframe = wireframeCheck.checked;
+            config.opacity = parseFloat(opacitySlider.value);
+            
+            const sliderVal = parseFloat(sliceXSlider.value);
+            if(!isPlaying) {
+                config.currentX = sliderVal;
+                sliceXVal.innerText = sliderVal.toFixed(2);
+            }
+            updateSimulation();
+        }
+
+        inputFunc.addEventListener('input', autoUpdate);
+        inputA.addEventListener('input', autoUpdate);
+        inputB.addEventListener('input', autoUpdate);
+        
+        shapeSelect.addEventListener('change', updateUI);
+        sliceXSlider.addEventListener('input', updateUI);
+        wireframeCheck.addEventListener('change', updateUI);
+        opacitySlider.addEventListener('input', () => {
+             document.getElementById('opacityVal').innerText = (opacitySlider.value * 100).toFixed(0) + '%';
+             updateUI();
+        });
+
+        playBtn.addEventListener('click', () => {
+            if (!isPlaying && config.currentX >= config.b) {
+                config.currentX = config.a;
+                sliceXSlider.value = config.a;
+            }
+            isPlaying = !isPlaying;
+            playBtn.innerHTML = isPlaying ? '<i class="fa-solid fa-pause"></i> <span id="playBtnText">Tạm dừng</span>' : '<i class="fa-solid fa-play"></i> <span id="playBtnText">Tiếp tục</span>';
+        });
+        
+        document.getElementById('resetViewBtn').addEventListener('click', () => {
+             controls.reset(); 
+             camera.position.set(0, -18, 8); 
+        });
+
+        document.getElementById('menuBtn').addEventListener('click', () => {
+            document.getElementById('sidebar').classList.toggle('-translate-x-full');
+            document.getElementById('sidebarOverlay').classList.toggle('hidden');
+        });
+        document.getElementById('sidebarOverlay').addEventListener('click', () => {
+             document.getElementById('sidebar').classList.add('-translate-x-full');
+             document.getElementById('sidebarOverlay').add('hidden');
+        });
+
+        init();
+
+    </script>
+</body>
+</html>
