@@ -2,8 +2,8 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mô phỏng Thể tích & Thiết diện</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Mô phỏng Thể tích - Tâm Đức</title>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -33,10 +33,11 @@
 
         /* Glassmorphism utility */
         .glass {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
-            border: 1px solid rgba(226, 232, 240, 0.8);
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
         }
         
         /* Range Slider Styling */
@@ -46,13 +47,13 @@
         }
         input[type=range]::-webkit-slider-thumb {
             -webkit-appearance: none;
-            height: 16px;
-            width: 16px;
+            height: 18px;
+            width: 18px;
             border-radius: 50%;
             background: #4f46e5;
-            margin-top: -6px;
+            margin-top: -7px;
             cursor: pointer;
-            box-shadow: 0 0 2px rgba(0,0,0,0.2);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
             transition: transform 0.1s;
         }
         input[type=range]::-webkit-slider-thumb:hover {
@@ -61,35 +62,41 @@
         input[type=range]::-webkit-slider-runnable-track {
             width: 100%;
             height: 4px;
-            background: #e2e8f0;
+            background: #cbd5e1;
             border-radius: 2px;
         }
         
-        body { overflow: hidden; }
+        body { overflow: hidden; touch-action: none; }
         
-        /* Mobile Legend Scaling */
-        @media (max-width: 640px) {
-            .legend-box { transform: scale(0.85); transform-origin: top right; }
+        /* Animation for Floating Buttons */
+        .fab-btn {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .fab-btn:active {
+            transform: scale(0.95);
         }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-800 font-sans h-screen flex flex-col md:flex-row">
-
-    <!-- Mobile Header -->
-    <div class="md:hidden bg-indigo-600 text-white p-3 flex justify-between items-center z-50 shadow-md shrink-0">
-        <h1 class="font-bold text-base flex items-center"><i class="fa-solid fa-cube mr-2"></i>Mô phỏng Thể tích</h1>
-        <button id="menuBtn" class="focus:outline-none w-8 h-8 flex items-center justify-center rounded hover:bg-indigo-700 transition"><i class="fa-solid fa-bars"></i></button>
-    </div>
+<body class="bg-slate-50 text-slate-800 font-sans h-screen flex flex-col md:flex-row overflow-hidden">
 
     <!-- Sidebar -->
-    <aside id="sidebar" class="fixed inset-y-0 left-0 md:relative w-72 lg:w-80 h-full glass shadow-2xl md:shadow-none z-40 transform -translate-x-full md:translate-x-0 transition-transform duration-300 flex flex-col border-r border-slate-200">
+    <aside id="sidebar" class="fixed inset-y-0 left-0 md:relative w-80 h-full glass z-50 transform -translate-x-full md:translate-x-0 transition-all duration-300 flex flex-col border-r border-slate-200 shadow-2xl md:shadow-none md:ml-0">
         
-        <div class="p-5 bg-indigo-600 text-white shrink-0 hidden md:block">
-            <h1 class="text-lg font-bold flex items-center"><i class="fa-solid fa-shapes mr-3"></i>Mô phỏng 3D</h1>
-            <p class="text-indigo-200 text-xs mt-1">Phương pháp Cắt Lát (Slicing)</p>
+        <!-- Sidebar Header (Simplified) -->
+        <div class="p-5 bg-indigo-700 text-white shrink-0 relative flex items-center justify-between">
+            <div>
+                <h1 class="text-sm font-bold uppercase tracking-wider flex items-center gap-2">
+                    <i class="fa-solid fa-sliders"></i> THÔNG SỐ MÔ PHỎNG
+                </h1>
+            </div>
+            
+            <!-- Close Button for Mobile -->
+            <button id="closeSidebarBtn" class="md:hidden text-white/70 hover:text-white focus:outline-none p-2 rounded-full hover:bg-white/10 transition">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
         </div>
 
-        <div class="flex-1 overflow-y-auto p-5 space-y-6">
+        <div class="flex-1 overflow-y-auto p-5 space-y-6 pb-24 md:pb-5">
             
             <!-- Function Input -->
             <div class="space-y-2">
@@ -97,7 +104,7 @@
                 <div class="relative group">
                     <span class="absolute left-3 top-2.5 text-slate-400 font-serif italic">y =</span>
                     <input type="text" id="functionInput" value="sqrt(4^2 - x^2)" 
-                        class="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition-all font-mono text-sm text-indigo-700 group-hover:bg-white">
+                        class="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all font-mono text-sm text-indigo-700 group-hover:bg-white shadow-sm">
                 </div>
                 <p class="text-[10px] text-slate-400 mt-1 italic" id="functionHint">Ví dụ: Đáy tròn R=4</p>
                 <p id="errorMsg" class="text-red-500 text-xs hidden flex items-center mt-1"><i class="fa-solid fa-circle-exclamation mr-1"></i>Lỗi cú pháp</p>
@@ -108,7 +115,7 @@
                 <div class="space-y-2">
                     <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider">Hình dạng Thiết diện</label>
                     <div class="relative">
-                        <select id="shapeSelect" class="w-full pl-3 pr-8 py-2 bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm font-medium text-slate-700 outline-none appearance-none cursor-pointer hover:bg-white transition-colors">
+                        <select id="shapeSelect" class="w-full pl-3 pr-8 py-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 text-sm font-medium text-slate-700 outline-none appearance-none cursor-pointer hover:bg-white transition-colors shadow-sm">
                             <option value="equilateral">Tam giác đều</option>
                             <option value="square">Hình vuông</option>
                             <option value="semicircle">Nửa hình tròn</option>
@@ -121,12 +128,12 @@
                 </div>
                 
                 <!-- Slice Position Slider -->
-                <div class="space-y-2 bg-indigo-50 p-3 rounded-lg border border-indigo-100">
-                    <label class="block text-[10px] font-bold text-indigo-800 uppercase flex justify-between mb-1">
+                <div class="space-y-2 bg-indigo-50 p-4 rounded-xl border border-indigo-100 shadow-sm">
+                    <label class="block text-[10px] font-bold text-indigo-800 uppercase flex justify-between mb-2">
                         Vị trí cắt (x)
-                        <span id="sliceXVal" class="font-mono text-indigo-600 bg-white px-1 rounded">0.00</span>
+                        <span id="sliceXVal" class="font-mono text-indigo-600 bg-white px-1.5 py-0.5 rounded border border-indigo-100 shadow-sm">0.00</span>
                     </label>
-                    <input type="range" id="sliceXSlider" class="w-full accent-indigo-600 cursor-pointer">
+                    <input type="range" id="sliceXSlider" class="w-full accent-indigo-600 cursor-pointer block h-6">
                 </div>
             </div>
 
@@ -135,11 +142,11 @@
                 <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider">Cận tích phân [a, b]</label>
                 <div class="grid grid-cols-2 gap-3">
                     <div>
-                        <label class="text-[10px] text-slate-400 block mb-1">Cận a (Start)</label>
+                        <label class="text-[10px] text-slate-400 block mb-1">Start (a)</label>
                         <input type="number" id="startX" value="-4" step="0.1" class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 font-mono text-sm hover:bg-white transition-colors">
                     </div>
                     <div>
-                        <label class="text-[10px] text-slate-400 block mb-1">Cận b (End)</label>
+                        <label class="text-[10px] text-slate-400 block mb-1">End (b)</label>
                         <input type="number" id="endX" value="4" step="0.1" class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 font-mono text-sm hover:bg-white transition-colors">
                     </div>
                 </div>
@@ -147,65 +154,106 @@
 
             <hr class="border-slate-200">
 
-            <!-- Play Controls -->
-            <div class="flex gap-2">
-                <button id="playBtn" class="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white py-2.5 rounded-lg transition-all active:scale-95 font-medium text-sm flex items-center justify-center gap-2 shadow-sm">
-                    <i class="fa-solid fa-play"></i> <span id="playBtnText">Chạy mô phỏng</span>
-                </button>
-                <button id="resetViewBtn" class="bg-white hover:bg-slate-100 text-slate-600 border border-slate-300 w-10 flex items-center justify-center rounded-lg transition-colors shadow-sm" title="Đặt lại Camera">
-                    <i class="fa-solid fa-video"></i>
-                </button>
-            </div>
-
             <!-- Appearance -->
             <div class="space-y-4">
-                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider">Tùy chỉnh hiển thị</label>
+                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider">Hiển thị</label>
                 
-                <div class="flex items-center justify-between">
-                    <span class="text-sm text-slate-700">Lưới (Wireframe)</span>
+                <div class="flex items-center justify-between p-2 bg-slate-50 rounded-lg border border-slate-200">
+                    <span class="text-sm text-slate-700 font-medium">Lưới (Wireframe)</span>
                     <label class="relative inline-flex items-center cursor-pointer">
                         <input type="checkbox" id="wireframeCheck" class="sr-only peer" checked>
-                        <div class="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-indigo-600"></div>
+                        <div class="w-10 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
                     </label>
                 </div>
                 
                 <div class="space-y-1">
-                    <div class="flex justify-between text-xs text-slate-500"><span>Độ đậm (Opacity)</span><span id="opacityVal">30%</span></div>
-                    <input type="range" id="opacitySlider" min="0.1" max="1" step="0.05" value="0.3" class="w-full accent-indigo-600">
+                    <div class="flex justify-between text-xs text-slate-500"><span>Độ đậm khối</span><span id="opacityVal">30%</span></div>
+                    <input type="range" id="opacitySlider" min="0.1" max="1" step="0.05" value="0.3" class="w-full accent-indigo-600 h-6">
                 </div>
-            </div>
-        </div>
-        
-        <div class="p-4 border-t border-slate-200 bg-slate-50">
-            <div class="text-[10px] text-slate-400 text-center">
-                Three.js & Math.js Powered
             </div>
         </div>
     </aside>
 
-    <!-- Main Canvas -->
-    <main class="flex-1 relative bg-white overflow-hidden h-full">
+    <!-- Main Canvas Area -->
+    <main class="flex-1 relative bg-white w-full h-full">
+        
+        <!-- App Title Overlay (Centered Top) -->
+        <div class="absolute top-2 md:top-4 left-0 right-0 flex justify-center z-10 pointer-events-none px-12 md:px-0">
+            <div class="glass px-4 py-2 md:px-6 md:py-3 rounded-full shadow-lg border border-indigo-100 bg-white/95">
+                <h1 class="text-[10px] md:text-sm font-bold text-indigo-800 uppercase tracking-widest text-center leading-tight">
+                    APP HỌC TẬP HỆ THỐNG GIÁO DỤC TÂM ĐỨC
+                </h1>
+            </div>
+        </div>
+
+        <!-- Desktop Sidebar Toggle Button -->
+        <button id="desktopToggleBtn" class="absolute top-4 left-4 z-20 bg-white/90 backdrop-blur text-slate-600 hover:text-indigo-600 hover:bg-white p-2.5 rounded-xl shadow-md border border-slate-200 hidden md:flex items-center justify-center transition-all active:scale-95" title="Ẩn/Hiện thanh công cụ">
+            <i class="fa-solid fa-bars text-lg"></i>
+        </button>
+
         <div id="canvas-container" class="w-full h-full cursor-move touch-none"></div>
         
-        <!-- Legend Overlay (Responsive) -->
-        <div class="absolute top-4 right-4 flex flex-col gap-2 items-end pointer-events-none legend-box z-10">
-            <div class="glass px-3 py-1.5 rounded-md text-slate-700 shadow-sm border border-slate-200 flex items-center gap-2">
-                <div class="w-2.5 h-2.5 bg-yellow-500 rounded-sm shadow-sm border border-yellow-600"></div> <span class="text-[10px] font-bold uppercase tracking-wide">Mặt cắt S(x)</span>
+        <!-- Legend Overlay (Top Right) -->
+        <div class="absolute top-16 md:top-4 right-4 flex flex-col gap-2 items-end pointer-events-none z-10 scale-90 origin-top-right md:scale-100">
+            <div class="glass px-3 py-1.5 rounded-lg text-slate-700 shadow-sm border border-slate-200 flex items-center gap-2">
+                <div class="w-3 h-3 bg-yellow-400 rounded-sm shadow-sm border border-yellow-500"></div> <span class="text-[10px] font-bold uppercase">Thiết diện S(x)</span>
             </div>
-            <div class="glass px-3 py-1.5 rounded-md text-slate-700 shadow-sm border border-slate-200 flex items-center gap-2">
-                <div class="w-2.5 h-2.5 bg-red-500 rounded-full"></div> <span class="text-[10px] font-bold uppercase tracking-wide">Trục Ox</span>
+            <div class="glass px-3 py-1.5 rounded-lg text-slate-700 shadow-sm border border-slate-200 flex items-center gap-2">
+                <div class="w-3 h-3 bg-red-500 rounded-full"></div> <span class="text-[10px] font-bold uppercase">Trục Ox</span>
             </div>
-            <div class="glass px-3 py-1.5 rounded-md text-slate-700 shadow-sm border border-slate-200 flex items-center gap-2">
-                <div class="w-2.5 h-2.5 bg-green-500 rounded-full"></div> <span class="text-[10px] font-bold uppercase tracking-wide">Trục Oy</span>
+            <div class="glass px-3 py-1.5 rounded-lg text-slate-700 shadow-sm border border-slate-200 flex items-center gap-2">
+                <div class="w-3 h-3 bg-green-500 rounded-full"></div> <span class="text-[10px] font-bold uppercase">Trục Oy</span>
             </div>
-             <div class="glass px-3 py-1.5 rounded-md text-slate-700 shadow-sm border border-slate-200 flex items-center gap-2">
-                <div class="w-2.5 h-2.5 bg-blue-500 rounded-full"></div> <span class="text-[10px] font-bold uppercase tracking-wide">Trục Oz</span>
+             <div class="glass px-3 py-1.5 rounded-lg text-slate-700 shadow-sm border border-slate-200 flex items-center gap-2">
+                <div class="w-3 h-3 bg-blue-500 rounded-full"></div> <span class="text-[10px] font-bold uppercase">Trục Oz</span>
+            </div>
+        </div>
+
+        <!-- Instructions (Bottom Left) -->
+        <div class="absolute bottom-24 md:bottom-4 left-4 z-10 pointer-events-none">
+             <div class="glass px-3 py-2 rounded-lg border border-slate-200 shadow-sm text-slate-600 text-[10px] md:text-xs font-medium flex gap-3 items-center bg-white/80">
+                <span class="flex items-center"><i class="fa-solid fa-rotate mr-1.5 text-indigo-500"></i>Xoay</span>
+                <span class="w-px h-3 bg-slate-300"></span>
+                <span class="flex items-center"><i class="fa-solid fa-magnifying-glass-plus mr-1.5 text-indigo-500"></i>Zoom</span>
+                <span class="w-px h-3 bg-slate-300"></span>
+                <span class="flex items-center"><i class="fa-regular fa-hand-paper mr-1.5 text-indigo-500"></i>Kéo</span>
+            </div>
+        </div>
+
+        <!-- Author Credit (Bottom Right) -->
+        <div class="absolute bottom-24 md:bottom-4 right-4 z-10 pointer-events-none">
+             <div class="glass px-3 py-2 rounded-lg border border-red-100 shadow-sm bg-white/90">
+                <p class="text-[10px] md:text-xs text-red-600 font-bold uppercase tracking-wide">Thiết kế bởi: GV Nguyễn Thành Đạt</p>
+            </div>
+        </div>
+
+        <!-- Floating Action Buttons (Bottom Center) -->
+        <div class="absolute bottom-6 left-0 right-0 flex justify-center items-center gap-4 z-20 pointer-events-none">
+            <!-- Container for buttons to receive pointer events -->
+            <div class="flex items-center gap-3 p-2 rounded-2xl glass shadow-xl pointer-events-auto border border-white/50 backdrop-blur-xl">
+                
+                <!-- Toggle Sidebar Button (Mobile) -->
+                <button id="fabMenuBtn" class="fab-btn w-10 h-10 md:hidden flex items-center justify-center rounded-xl bg-white text-slate-600 hover:bg-slate-100 hover:text-indigo-600 shadow-sm border border-slate-200" title="Cài đặt">
+                    <i class="fa-solid fa-sliders text-lg"></i>
+                </button>
+
+                <div class="w-px h-6 bg-slate-300 md:hidden"></div>
+
+                <!-- Play Button -->
+                <button id="fabPlayBtn" class="fab-btn h-11 px-6 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow-md flex items-center gap-2 font-bold text-sm tracking-wide transition-colors">
+                    <i class="fa-solid fa-play"></i> <span id="fabPlayText">CHẠY</span>
+                </button>
+
+                <!-- Reset Camera Button -->
+                <button id="fabResetBtn" class="fab-btn w-11 h-11 bg-white hover:bg-slate-50 text-slate-600 hover:text-indigo-600 rounded-xl shadow-sm border border-slate-200 flex items-center justify-center" title="Góc nhìn chuẩn">
+                    <i class="fa-solid fa-video"></i>
+                </button>
             </div>
         </div>
     </main>
 
     <!-- Overlay for Mobile Sidebar -->
-    <div id="sidebarOverlay" class="fixed inset-0 bg-slate-900/20 backdrop-blur-sm z-30 hidden md:hidden transition-opacity"></div>
+    <div id="sidebarOverlay" class="fixed inset-0 bg-slate-900/20 backdrop-blur-sm z-40 hidden transition-opacity"></div>
 
     <script type="module">
         import * as THREE from 'three';
@@ -234,10 +282,16 @@
         const inputB = document.getElementById('endX');
         const sliceXSlider = document.getElementById('sliceXSlider');
         const sliceXVal = document.getElementById('sliceXVal');
-        const playBtn = document.getElementById('playBtn');
         const wireframeCheck = document.getElementById('wireframeCheck');
         const opacitySlider = document.getElementById('opacitySlider');
         const opacityVal = document.getElementById('opacityVal');
+        
+        // Floating Buttons
+        const fabPlayBtn = document.getElementById('fabPlayBtn');
+        const fabPlayText = document.getElementById('fabPlayText');
+        const fabResetBtn = document.getElementById('fabResetBtn');
+        const fabMenuBtn = document.getElementById('fabMenuBtn');
+        const desktopToggleBtn = document.getElementById('desktopToggleBtn');
         
         function init() {
             scene = new THREE.Scene();
@@ -276,7 +330,6 @@
             dirLight.shadow.bias = -0.001; 
             scene.add(dirLight);
             
-            // Fill light
             const fillLight = new THREE.DirectionalLight(0xebf8ff, 0.3);
             fillLight.position.set(-5, 0, 5);
             scene.add(fillLight);
@@ -473,21 +526,17 @@
             if (!data) return;
             const { points, maxVal, maxDim } = data;
 
-            // Calculate actual Max Height for Z-Axis scaling
             let maxH = 0;
             if (config.sliceShape === 'equilateral') maxH = maxVal * Math.sqrt(3);
             else if (config.sliceShape === 'square') maxH = maxVal * 2;
             else if (config.sliceShape === 'semicircle') maxH = maxVal;
             else if (config.sliceShape === 'isosceles') maxH = maxVal * 2;
             
-            // Scaled axes based on object dimension
             const maxXExtent = Math.max(Math.abs(config.a), Math.abs(config.b));
             const maxYExtent = maxVal;
             
-            // X and Y axes length relative to solid size
             drawAxes(maxXExtent * 1.3, maxYExtent * 1.3, maxH * 1.1);
 
-            // Draw Base Line (Oxy Plane)
             const lineGeom = new THREE.BufferGeometry().setFromPoints(points.map(p => new THREE.Vector3(p.x, p.y, 0)));
             const lineMat = new THREE.LineBasicMaterial({ color: 0xf59e0b, linewidth: 2 });
             lineGroup.add(new THREE.Line(lineGeom, lineMat));
@@ -497,7 +546,6 @@
 
             const solidGeo = createSlicedGeometry(points, config.currentX);
 
-            // 1. Solid Body
             const solidMat = new THREE.MeshPhysicalMaterial({
                 color: config.color,
                 metalness: 0.1, 
@@ -515,19 +563,17 @@
             solid.receiveShadow = true;
             meshGroup.add(solid);
 
-            // 2. Wireframe
             if (config.wireframe) {
                 const wireMat = new THREE.MeshBasicMaterial({
                     color: 0x1e3a8a, 
                     wireframe: true,
                     transparent: true,
-                    opacity: 0.5 // Rõ nét hơn (was 0.3)
+                    opacity: 0.5 
                 });
                 const wireMesh = new THREE.Mesh(solidGeo, wireMat);
                 meshGroup.add(wireMesh);
             }
 
-            // 3. Highlight Slice (Deep Yellow)
             let currentY = 0;
             let idx = 0;
             while(idx < points.length && points[idx].x < config.currentX) idx++;
@@ -540,16 +586,15 @@
             
             const sliceGeo = createCurrentSliceMesh(config.currentX, currentY);
             if(sliceGeo) {
-                // Deep Yellow / Amber Glass
                 const sliceMat = new THREE.MeshPhysicalMaterial({ 
-                    color: 0xffc107, // Amber 500
+                    color: 0xffc107, 
                     side: THREE.DoubleSide, 
                     transparent: true, 
                     opacity: 0.7,
                     metalness: 0.1,
                     roughness: 0.1,
                     clearcoat: 0.8,
-                    emissive: 0xff8f00, // Amber 800
+                    emissive: 0xff8f00, 
                     emissiveIntensity: 0.3
                 });
                 const slice = new THREE.Mesh(sliceGeo, sliceMat);
@@ -557,7 +602,7 @@
                 meshGroup.add(slice);
                 
                 const edges = new THREE.EdgesGeometry(sliceGeo);
-                const outline = new THREE.LineSegments(edges, new THREE.LineBasicMaterial( { color: 0xb45309, linewidth: 2 } ) ); // Amber 700
+                const outline = new THREE.LineSegments(edges, new THREE.LineBasicMaterial( { color: 0xb45309, linewidth: 2 } ) ); 
                 outline.position.x += 0.003;
                 meshGroup.add(outline);
             }
@@ -570,12 +615,10 @@
             canvas.width = 128; canvas.height = 64;
             var context = canvas.getContext('2d');
             
-            // Clear entire canvas for full transparency
             context.clearRect(0, 0, canvas.width, canvas.height);
 
-            // LaTeX-like font: Times New Roman, Italic
             context.font = "Italic bold " + fontsize + "px 'Times New Roman', serif";
-            context.fillStyle = "rgba(51, 65, 85, 1.0)"; // Slate-700
+            context.fillStyle = "rgba(51, 65, 85, 1.0)"; 
             context.textAlign = 'center';
             context.textBaseline = 'middle';
             context.fillText( message, canvas.width/2, canvas.height/2);
@@ -595,14 +638,12 @@
                 const g = new THREE.Group();
                 const mat = new THREE.MeshBasicMaterial({color});
                 
-                // Positive Axis
                 const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, size, 8), mat);
                 shaft.position.y = size/2;
                 const head = new THREE.Mesh(new THREE.ConeGeometry(0.15, 0.3, 12), mat);
                 head.position.y = size;
                 g.add(shaft, head);
 
-                // Negative Axis
                 const negGeo = new THREE.BufferGeometry().setFromPoints([
                     new THREE.Vector3(0, 0, 0),
                     new THREE.Vector3(0, -size, 0)
@@ -647,7 +688,7 @@
                 if (nextX >= config.b) {
                     nextX = config.b;
                     isPlaying = false;
-                    playBtn.innerHTML = '<i class="fa-solid fa-play"></i> <span id="playBtnText">Chạy mô phỏng</span>';
+                    updatePlayButtons(); 
                 }
                 config.currentX = nextX;
                 sliceXSlider.value = nextX;
@@ -696,37 +737,57 @@
              updateUI();
         });
 
-        playBtn.addEventListener('click', () => {
+        // Toggle Play Logic
+        function togglePlay() {
             if (!isPlaying && config.currentX >= config.b) {
                 config.currentX = config.a;
                 sliceXSlider.value = config.a;
             }
             isPlaying = !isPlaying;
-            playBtn.innerHTML = isPlaying ? '<i class="fa-solid fa-pause"></i> <span id="playBtnText">Tạm dừng</span>' : '<i class="fa-solid fa-play"></i> <span id="playBtnText">Tiếp tục</span>';
-        });
+            updatePlayButtons();
+        }
+
+        function updatePlayButtons() {
+            const html = isPlaying 
+                ? '<i class="fa-solid fa-pause"></i> <span id="fabPlayText">DỪNG</span>' 
+                : '<i class="fa-solid fa-play"></i> <span id="fabPlayText">CHẠY</span>';
+            fabPlayBtn.innerHTML = html;
+        }
+
+        fabPlayBtn.addEventListener('click', togglePlay);
         
-        document.getElementById('resetViewBtn').addEventListener('click', () => {
+        // Reset Camera Logic
+        fabResetBtn.addEventListener('click', () => {
              controls.reset(); 
              camera.position.set(12, -12, 10); 
         });
 
-        const menuBtn = document.getElementById('menuBtn');
+        // Sidebar Toggle Logic
         const sidebar = document.getElementById('sidebar');
         const overlay = document.getElementById('sidebarOverlay');
+        const closeSidebarBtn = document.getElementById('closeSidebarBtn');
 
         function toggleSidebar() {
-             const isHidden = sidebar.classList.contains('-translate-x-full');
-             if(isHidden) {
-                 sidebar.classList.remove('-translate-x-full');
-                 overlay.classList.remove('hidden');
-             } else {
-                 sidebar.classList.add('-translate-x-full');
-                 overlay.classList.add('hidden');
-             }
+            // Mobile toggle
+            if (window.innerWidth < 768) {
+                const isHidden = sidebar.classList.contains('-translate-x-full');
+                if(isHidden) {
+                    sidebar.classList.remove('-translate-x-full');
+                    overlay.classList.remove('hidden');
+                } else {
+                    sidebar.classList.add('-translate-x-full');
+                    overlay.classList.add('hidden');
+                }
+            } else {
+                // Desktop toggle (using negative margin)
+                sidebar.classList.toggle('md:-ml-80');
+            }
         }
 
-        menuBtn.addEventListener('click', toggleSidebar);
+        fabMenuBtn.addEventListener('click', toggleSidebar);
+        closeSidebarBtn.addEventListener('click', toggleSidebar);
         overlay.addEventListener('click', toggleSidebar);
+        desktopToggleBtn.addEventListener('click', toggleSidebar);
 
         init();
 
